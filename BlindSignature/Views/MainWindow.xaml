@@ -1,0 +1,150 @@
+﻿<Window x:Class="BlindSignature.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:BlindSignature"
+        xmlns:viewModels="clr-namespace:BlindSignature.ViewModels"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="1025" Width="700"
+        ResizeMode="CanMinimize"
+        Closed="MainWindow_OnClosed"
+        WindowStartupLocation="CenterScreen">
+    <Window.DataContext>
+        <viewModels:SignViewModel />
+    </Window.DataContext>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="1.6*" />
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="0">
+            <Button x:Name="InfoHostButton"
+                    IsEnabled="{Binding IsThreadWaiting}"
+                    Padding="5 0 5 0"
+                    HorizontalAlignment="Center" 
+                    Content="{Binding HostModel.OurHost.Name}"
+                    Click="InfoHostButton_OnClick">
+                <Button.Resources>
+                    <Style TargetType="Border" BasedOn="{StaticResource RoundBorders}" />
+                </Button.Resources>
+            </Button>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock VerticalAlignment="Center" Text="Открытый ключ: модуль =" />
+                <TextBox IsEnabled="{Binding IsThreadWaiting}" 
+                         Width="75" 
+                         TextAlignment="Right" 
+                         Text="{Binding OpenKey.Module}" >
+                    <TextBox.Resources>
+                        <Style TargetType="Border" BasedOn="{StaticResource RoundBorders}" />
+                    </TextBox.Resources>
+                </TextBox>
+                <TextBlock VerticalAlignment="Center" Text="экспонента =" />
+                <TextBox IsEnabled="{Binding IsThreadWaiting}" 
+                         Width="75" 
+                         TextAlignment="Right" 
+                         Text="{Binding OpenKey.Value}">
+                    <TextBox.Resources>
+                        <Style TargetType="Border" BasedOn="{StaticResource RoundBorders}" />
+                    </TextBox.Resources>
+                </TextBox>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock VerticalAlignment="Center" Text="Закрытый ключ: модуль =" />
+                <TextBox IsEnabled="{Binding IsThreadWaiting}" 
+                         Width="75" 
+                         TextAlignment="Right" 
+                         Text="{Binding ClosedKey.Module}">
+                    <TextBox.Resources>
+                        <Style TargetType="Border" BasedOn="{StaticResource RoundBorders}" />
+                    </TextBox.Resources>
+                </TextBox>
+                <TextBlock VerticalAlignment="Center" Text="экспонента =" />
+                <TextBox IsEnabled="{Binding IsThreadWaiting}" 
+                         Width="75" 
+                         TextAlignment="Right" 
+                         Text="{Binding ClosedKey.Value}">
+                    <TextBox.Resources>
+                        <Style TargetType="Border" BasedOn="{StaticResource RoundBorders}" />
+                    </TextBox.Resources>
+                </TextBox>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock VerticalAlignment="Center" Text="Случайное значение: " />
+                <TextBox IsReadOnly="True"
+                         IsReadOnlyCaretVisible="False"
+                         Width="75" 
+                         TextAlignment="Right" 
+                         Text="{Binding RandomValue}">
+                    <TextBox.Resources>
+                        <Style TargetType="Border" BasedOn="{StaticResource RoundBorders}" />
+                    </TextBox.Resources>
+                </TextBox>
+            </StackPanel>
+        </StackPanel>
+        <StackPanel Grid.Row="1">
+            <TextBox IsEnabled="{Binding IsThreadWaiting}" Text="{Binding Message}">
+                <TextBox.Resources>
+                    <Style TargetType="Border" BasedOn="{StaticResource RoundBorders}" />
+                </TextBox.Resources>
+            </TextBox>
+            <Button x:Name="SendButton" 
+                    IsEnabled="{Binding IsThreadWaiting}" 
+                    Click="SendButton_OnClick" 
+                    Content="Отправить сообщение">
+                <Button.Resources>
+                    <Style TargetType="Border" BasedOn="{StaticResource RoundBorders}" />
+                </Button.Resources>
+            </Button>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="0" 
+                        x:Name="WaitButton" 
+                        IsEnabled="{Binding IsThreadWaiting}" 
+                        Click="WaitButton_OnClick" 
+                        Content="Запустить сервер">
+                    <Button.Resources>
+                        <Style TargetType="Border" BasedOn="{StaticResource RoundBorders}" />
+                    </Button.Resources>
+                </Button>
+                <Button Grid.Column="1" 
+                        x:Name="StopWaitButton"
+                        IsEnabled="{Binding IsServerWorking}"
+                        Click="StopWaitButton_OnClick"
+                        Content="Остановить сервер">
+                    <Button.Resources>
+                        <Style TargetType="Border" BasedOn="{StaticResource RoundBorders}" />
+                    </Button.Resources>
+                </Button>
+            </Grid>
+        </StackPanel>
+        <StackPanel Grid.Row="2">
+            <TextBox TextWrapping="Wrap" 
+                     IsReadOnly="True" 
+                     IsReadOnlyCaretVisible="False" 
+                     Height="275" FontSize="14" 
+                     Text="{Binding Logs}">
+                <TextBox.Resources>
+                    <Style TargetType="Border" BasedOn="{StaticResource RoundBorders}" />
+                </TextBox.Resources>
+            </TextBox>
+            <TextBox IsReadOnly="True" IsReadOnlyCaretVisible="False" Text="{Binding ExceptionMessage}">
+                <TextBox.Resources>
+                    <Style TargetType="Border" BasedOn="{StaticResource RoundBorders}" />
+                </TextBox.Resources>
+            </TextBox>
+            <Button x:Name="ExportLogsButton" 
+                    IsEnabled="{Binding IsThreadWaiting}" 
+                    Click="ExportLogsButton_OnClick" 
+                    Content="Экспортировать логи">
+                <Button.Resources>
+                    <Style TargetType="Border" BasedOn="{StaticResource RoundBorders}" />
+                </Button.Resources>
+            </Button>
+        </StackPanel>
+    </Grid>
+</Window>
