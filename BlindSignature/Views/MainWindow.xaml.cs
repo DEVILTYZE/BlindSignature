@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Windows;
 using BlindSignature.Annotations;
+using BlindSignature.Helpers;
+using BlindSignature.Models;
 using BlindSignature.ViewModels;
 
 namespace BlindSignature.Views
@@ -43,6 +45,10 @@ namespace BlindSignature.Views
 
         private void StopWaitButton_OnClick(object sender, RoutedEventArgs e) => _model.IsServerWorking = false;
 
-        private void MainWindow_OnClosed([CanBeNull] object sender, EventArgs e) => _model.WaitThread();
+        private void MainWindow_OnClosed([CanBeNull] object sender, EventArgs e)
+        {
+            _model.IsServerWorking = false;
+            _model.WaitThread();
+        }
     }
 }

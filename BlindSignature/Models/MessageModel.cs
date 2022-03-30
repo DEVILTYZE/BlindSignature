@@ -62,19 +62,9 @@ namespace BlindSignature.Models
             DateOfCreation = DateTime.Now;
         }
 
-        public MessageModel(int hash) => GetDataFromByteArray(BitConverter.GetBytes(hash));
-
-        public override int GetHashCode() => BitConverter.ToInt32(GetByteArray());
-
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        [NotifyPropertyChangedInvocator]
-        private void OnPropertyChanged([CallerMemberName] string propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
+        public MessageModel(byte[] array) => GetDataFromByteArray(array);
         
-        private byte[] GetByteArray()
+        public byte[] GetByteArray()
         {
             var authorHash = Encoding.UTF8.GetBytes(Author).Concat(ConstHelper.Separator);
             var messageHash = Encoding.UTF8.GetBytes(Message).Concat(ConstHelper.Separator);
@@ -85,6 +75,14 @@ namespace BlindSignature.Models
             authorHash = authorHash.Concat(messageHash);
             authorHash = authorHash.Concat(dateHash);
             return authorHash.Concat(isSignedHash).ToArray();
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        [NotifyPropertyChangedInvocator]
+        private void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         private void GetDataFromByteArray(byte[] array)

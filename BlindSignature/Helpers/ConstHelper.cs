@@ -15,5 +15,8 @@
         public const string LocalName = "localhost";
         public const string LocalAddress = "127.0.0.1";
         public const int Port = 13000;
+        public const int StreamLength = 256;
+
+        public const int MaxPrimeNumber = 313;
     }
 }

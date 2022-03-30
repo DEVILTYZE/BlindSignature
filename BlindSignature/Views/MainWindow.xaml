@@ -44,7 +44,7 @@
                 <TextBox IsEnabled="{Binding IsThreadWaiting}" 
                          Width="75" 
                          TextAlignment="Right" 
-                         Text="{Binding OpenKey.Value}">
+                         Text="{Binding OpenKey.Exponent}">
                     <TextBox.Resources>
                         <Style TargetType="Border" BasedOn="{StaticResource RoundBorders}" />
                     </TextBox.Resources>
@@ -64,7 +64,7 @@
                 <TextBox IsEnabled="{Binding IsThreadWaiting}" 
                          Width="75" 
                          TextAlignment="Right" 
-                         Text="{Binding ClosedKey.Value}">
+                         Text="{Binding ClosedKey.Exponent}">
                     <TextBox.Resources>
                         <Style TargetType="Border" BasedOn="{StaticResource RoundBorders}" />
                     </TextBox.Resources>

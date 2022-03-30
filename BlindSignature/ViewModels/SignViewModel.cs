@@ -127,8 +127,7 @@ namespace BlindSignature.ViewModels
 
             IsThreadWaiting = true;
             Logs = string.Empty;
-            OpenKey = BlindSignatureGenerator.GenerateRandomKey();
-            ClosedKey = BlindSignatureGenerator.GenerateRandomKey();
+            (OpenKey, ClosedKey) = BlindSignatureGenerator.GenerateRandomKeys();
         }
 
         public bool SendMessage()
@@ -138,7 +137,7 @@ namespace BlindSignature.ViewModels
             
             IsThreadWaiting = false;
             
-            _thread = new Thread(new ParameterizedThreadStart(SendMessage));
+            _thread = new Thread(SendMessage);
             _thread.Start((HostModel.OtherHost.Name, ConstHelper.Port));
             WaitThread();
 
@@ -147,10 +146,12 @@ namespace BlindSignature.ViewModels
 
         private void SendMessage(object obj)
         {
+            const int dataLength = ConstHelper.StreamLength * 16;
+            
             var (name, port) = ((string, int))obj;
             ExceptionMessage = Logs = string.Empty;
             NetworkStream stream = null;
-            var data = new byte[256];
+            var data = new byte[dataLength];
 
             try
             {
@@ -158,7 +159,7 @@ namespace BlindSignature.ViewModels
                 _client = new TcpClient(name, port);
 
                 // Create a message.
-                var message = new MessageModel(HostModel.OurHost.Name, Message);
+                var message = new MessageModel(HostModel.OurHost.Name, Message) { IsSigned = true };
                 Logs += "Оригинальное сообщение: " + message.Message + "\r\n";
                 
                 // Get open key.
@@ -170,49 +171,48 @@ namespace BlindSignature.ViewModels
                     throw new Exception("Открытый ключ равняется null!");
                 
                 OpenKey = new Key(ByteArrayHelper.RemoveEndSeparator(data));
-                Logs += "Открытый ключ: " + OpenKey.Module + " / " + OpenKey.Value + "\r\n";
+                Logs += "Открытый ключ: " + OpenKey.Module + " / " + OpenKey.Exponent + "\r\n";
 
                 // Get signed message by us.
-                int signedHash;
-                (RandomValue, signedHash) = BlindSignatureGenerator.SignByOpenKey(message.GetHashCode(), OpenKey);
-                data = BitConverter.GetBytes(signedHash);
-                Logs += "Отправленное подписанное сообщение: " + string.Join(" ", data) + "\r\n";
+                var number = new IntNumberArray(message.GetByteArray());
+                var originalMessageNumber = (IntNumberArray)number.Clone();
+                Logs += "Чистое сообщение: " + number + "\r\n";
+                (RandomValue, number) = BlindSignatureGenerator.SignByOpenKey(number, OpenKey);
+                Logs += "Отправленное подписанное сообщение: " + number + "\r\n";
                 
                 // Sent signed message by us.
-                data = ByteArrayHelper.GetCommandAndDataByteArray(ConstHelper.CommandSignMessage, data);
+                data = ByteArrayHelper.GetCommandAndDataByteArray(ConstHelper.CommandSignMessage, number.GetBytes());
                 stream.Write(data, 0, data.Length);
 
                 // Get signed message by us and other user.
-                data = new byte[256];
+                data = new byte[dataLength];
                 stream.Read(data, 0, data.Length);
                 data = ByteArrayHelper.RemoveEndSeparator(data);
                 
                 if (ByteArrayHelper.IsInvalidData(data))
                     throw new Exception("Подписанное сообщение равняется null!");
                 
-                Logs += "Полученное подписанное сообщение: " + string.Join(" ", data) + "\r\n";
+                number = IntNumberArray.GetNumber(data);
+                Logs += "Полученное подписанное сообщение: " + number + "\r\n";
 
                 // Remove our sign.
-                signedHash = BitConverter.ToInt32(data);
-                signedHash = BlindSignatureGenerator.RemoveSignByOpenKey(signedHash, OpenKey, RandomValue);
-                data = BitConverter.GetBytes(signedHash);
-                Logs += "Сообщение с удалённой подписью: " + string.Join(" ", data) + "\r\n";
+                number = BlindSignatureGenerator.RemoveSignByOpenKey(number, OpenKey, RandomValue);
+                Logs += "Сообщение с удалённой подписью: " + number + "\r\n";
 
                 // Check sign.
-                var messageByteArray = BitConverter.GetBytes(message.GetHashCode());
-                Logs += "Отправленное чистое сообщение: " + string.Join(" ", messageByteArray) + "\r\n";
-                stream.Write(ByteArrayHelper.GetCommandAndDataByteArray(ConstHelper.CommandSignMessage, messageByteArray));
-                messageByteArray = new byte[256];
-                stream.Read(messageByteArray, 0, messageByteArray.Length);
-                messageByteArray = ByteArrayHelper.RemoveEndSeparator(messageByteArray);
+                // var messageByteArray = message.GetByteArray();
+                stream.Write(ByteArrayHelper.GetCommandAndDataByteArray(ConstHelper.CommandSignMessage, 
+                    originalMessageNumber.GetBytes()));
+                data = new byte[dataLength];
+                stream.Read(data, 0, data.Length);
+                data = ByteArrayHelper.RemoveEndSeparator(data);
                 
-                if (ByteArrayHelper.IsInvalidData(messageByteArray))
+                if (ByteArrayHelper.IsInvalidData(data))
                     throw new Exception("Подписанное сообщение равняется null!");
                 
-                Logs += "Полученное подписанное сообщение: " + string.Join(" ", messageByteArray) + "\r\n";
-                Logs += "Статус подписи: " + (ByteArrayHelper.IsEqualsArrays(data, messageByteArray)
-                    ? "УСПЕШНО\r\n"
-                    : "НЕУСПЕШНО\r\n");
+                originalMessageNumber = IntNumberArray.GetNumber(data);
+                Logs += "Полученное подписанное сообщение: " + originalMessageNumber + "\r\n";
+                Logs += "Статус подписи: " + (number.CompareTo(originalMessageNumber) == 0 ? "УСПЕШНО\r\n" : "НЕУСПЕШНО\r\n");
                 
                 // End connection.
                 stream.Write(ByteArrayHelper.GetCommandAndDataByteArray(ConstHelper.CommandEndConnection));
@@ -263,14 +263,14 @@ namespace BlindSignature.ViewModels
                 while (true)
                 {
                     // Waiting connection.
-                    Logs += "Ожидание сообщения...\r\n";
+                    Logs += "Ожидание подключения...\r\n";
                     var client = _server.AcceptTcpClient();
-                    Logs += "Попытка отправки сообщения\r\n";
+                    Logs += "Подключено\r\n";
                     _isConnected = true;
 
                     while (_isConnected)
                     {
-                        var data = new byte[256];
+                        var data = new byte[ConstHelper.StreamLength * 16];
                         stream = client.GetStream();
                         
                         do stream.Read(data, 0, data.Length);
@@ -280,18 +280,20 @@ namespace BlindSignature.ViewModels
                         data = ByteArrayHelper.RemoveEndSeparator(data);
                         var (index, offset) = ByteArrayHelper.GetOffsetOfSeparator(data);
                         string command;
+                        var number = new IntNumberArray();
 
                         if (index != -1)
                         {
                             command = Encoding.UTF8.GetString(new ArraySegment<byte>(data, 0, index).ToArray());
-                            data = new ArraySegment<byte>(data, offset, data.Length - offset).ToArray();
+                            //data = new ArraySegment<byte>(data, offset, data.Length - offset).ToArray();
+                            number = IntNumberArray.GetNumber(new ArraySegment<byte>(data, offset, data.Length - offset).ToArray());
                         }
                         else command = Encoding.UTF8.GetString(data);
 
-                        Logs += "Команда: " + command + "; данные: " + (index != -1 ? string.Join(" ", data) : "нет данных") + "\r\n";
+                        Logs += "Команда: " + command + "\r\nДанные: " + (index != -1 ? number : "нет данных") + "\r\n";
 
                         // Get and send our response.
-                        var response = SelectAndExecuteCommand(command, data).Concat(ConstHelper.Separator).ToArray();
+                        var response = SelectAndExecuteCommand(command, number).Concat(ConstHelper.Separator).ToArray();
                         stream.Write(response, 0, response.Length);
                         
                         if (string.CompareOrdinal(command, ConstHelper.CommandEndConnection) != 0)
@@ -378,14 +380,13 @@ namespace BlindSignature.ViewModels
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        private IEnumerable<byte> SelectAndExecuteCommand(string command, [CanBeNull] byte[] data)
+        private IEnumerable<byte> SelectAndExecuteCommand(string command, [CanBeNull] IntNumberArray number)
         {
-            var commands = new KeyValuePair<string, Func<byte[]>>[]
+            var commands = new (string, Func<IEnumerable<byte>>)[]
             {
-                new(ConstHelper.CommandGetOpenKey, () => OpenKey.GetHashValue()),
-                new(ConstHelper.CommandSignMessage, () => BitConverter.GetBytes(BlindSignatureGenerator.SignByClosedKey(
-                    BitConverter.ToInt32(data), ClosedKey))),
-                new(ConstHelper.CommandEndConnection, () =>
+                (ConstHelper.CommandGetOpenKey, () => OpenKey.GetBytes()),
+                (ConstHelper.CommandSignMessage, () => BlindSignatureGenerator.SignByClosedKey(number, ClosedKey).GetBytes()),
+                (ConstHelper.CommandEndConnection, () =>
                 {
                     _isConnected = false; 
                     return Encoding.UTF8.GetBytes("Соединение завершено");

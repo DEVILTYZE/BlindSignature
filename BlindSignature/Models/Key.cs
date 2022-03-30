@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -11,7 +12,7 @@ namespace BlindSignature.Models
     public sealed class Key : INotifyPropertyChanged
     {
         private int _module;
-        private int _value;
+        private int _exponent;
 
         public int Module
         {
@@ -23,28 +24,28 @@ namespace BlindSignature.Models
             }
         }
 
-        public int Value
+        public int Exponent
         {
-            get => _value;
+            get => _exponent;
             set
             {
-                _value = value;
-                OnPropertyChanged(nameof(Value));
+                _exponent = value;
+                OnPropertyChanged(nameof(Exponent));
             }
         }
 
         public Key(int module, int value)
         {
             Module = module;
-            Value = value;
+            Exponent = value;
         }
 
         public Key(byte[] array) => GetDataFromByteArray(array);
 
-        public byte[] GetHashValue()
+        public IEnumerable<byte> GetBytes()
         {
             var moduleHash = Encoding.UTF8.GetBytes(Module.ToString());
-            var valueHash = Encoding.UTF8.GetBytes(Value.ToString());
+            var valueHash = Encoding.UTF8.GetBytes(Exponent.ToString());
 
             return moduleHash.Concat(ConstHelper.Separator).Concat(valueHash).ToArray();
         }
@@ -60,7 +61,7 @@ namespace BlindSignature.Models
         private void GetDataFromByteArray(byte[] array)
         {
             var (index1, index2) = ByteArrayHelper.GetOffsetOfSeparator(array);
-            Value = int.Parse(Encoding.UTF8.GetString(new ArraySegment<byte>(array, index2, 
+            Exponent = int.Parse(Encoding.UTF8.GetString(new ArraySegment<byte>(array, index2, 
                 array.Length - index2)));
             Module = int.Parse(Encoding.UTF8.GetString(new ArraySegment<byte>(array, 0, index1)));
         }
