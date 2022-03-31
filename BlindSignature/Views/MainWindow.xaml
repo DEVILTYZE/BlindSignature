@@ -20,16 +20,23 @@
             <RowDefinition Height="1.6*" />
         </Grid.RowDefinitions>
         <StackPanel Grid.Row="0">
-            <Button x:Name="InfoHostButton"
-                    IsEnabled="{Binding IsThreadWaiting}"
-                    Padding="5 0 5 0"
-                    HorizontalAlignment="Center" 
-                    Content="{Binding HostModel.OurHost.Name}"
-                    Click="InfoHostButton_OnClick">
-                <Button.Resources>
-                    <Style TargetType="Border" BasedOn="{StaticResource RoundBorders}" />
-                </Button.Resources>
-            </Button>
+            <DockPanel LastChildFill="False">
+                <CheckBox Name="CheckBox0"
+                          IsEnabled="{Binding IsThreadWaiting}"
+                          Content="Случайная генерация ключей" 
+                          Checked="CheckBox_OnChangeCheckValue"
+                          Unchecked="CheckBox_OnChangeCheckValue" />
+                <Button x:Name="InfoHostButton"
+                        DockPanel.Dock="Right"
+                        IsEnabled="{Binding IsThreadWaiting}"
+                        Padding="5 0 5 0" 
+                        Content="{Binding HostModel.OurHost.Name}"
+                        Click="InfoHostButton_OnClick">
+                    <Button.Resources>
+                        <Style TargetType="Border" BasedOn="{StaticResource RoundBorders}" />
+                    </Button.Resources>
+                </Button>
+            </DockPanel>
             <StackPanel Orientation="Horizontal">
                 <TextBlock VerticalAlignment="Center" Text="Открытый ключ: модуль =" />
                 <TextBox IsEnabled="{Binding IsThreadWaiting}" 
@@ -52,7 +59,9 @@
             </StackPanel>
             <StackPanel Orientation="Horizontal">
                 <TextBlock VerticalAlignment="Center" Text="Закрытый ключ: модуль =" />
-                <TextBox IsEnabled="{Binding IsThreadWaiting}" 
+                <TextBox IsEnabled="{Binding IsThreadWaiting}"
+                         IsReadOnly="True"
+                         IsReadOnlyCaretVisible="True"
                          Width="75" 
                          TextAlignment="Right" 
                          Text="{Binding ClosedKey.Module}">
@@ -61,7 +70,9 @@
                     </TextBox.Resources>
                 </TextBox>
                 <TextBlock VerticalAlignment="Center" Text="экспонента =" />
-                <TextBox IsEnabled="{Binding IsThreadWaiting}" 
+                <TextBox IsEnabled="{Binding IsThreadWaiting}"
+                         IsReadOnly="True"
+                         IsReadOnlyCaretVisible="True" 
                          Width="75" 
                          TextAlignment="Right" 
                          Text="{Binding ClosedKey.Exponent}">
@@ -72,8 +83,7 @@
             </StackPanel>
             <StackPanel Orientation="Horizontal">
                 <TextBlock VerticalAlignment="Center" Text="Случайное значение: " />
-                <TextBox IsReadOnly="True"
-                         IsReadOnlyCaretVisible="False"
+                <TextBox IsEnabled="{Binding IsThreadWaiting}"
                          Width="75" 
                          TextAlignment="Right" 
                          Text="{Binding RandomValue}">
@@ -81,6 +91,11 @@
                         <Style TargetType="Border" BasedOn="{StaticResource RoundBorders}" />
                     </TextBox.Resources>
                 </TextBox>
+                <CheckBox Name="CheckBox1"
+                          IsEnabled="{Binding IsThreadWaiting}"
+                          Content="Случайная генерация значения" 
+                          Checked="CheckBox_OnChangeCheckValue"
+                          Unchecked="CheckBox_OnChangeCheckValue" />
             </StackPanel>
         </StackPanel>
         <StackPanel Grid.Row="1">

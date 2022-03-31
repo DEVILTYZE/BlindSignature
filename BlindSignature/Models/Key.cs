@@ -34,10 +34,10 @@ namespace BlindSignature.Models
             }
         }
 
-        public Key(int module, int value)
+        public Key(int module, int exponent)
         {
             Module = module;
-            Exponent = value;
+            Exponent = exponent;
         }
 
         public Key(byte[] array) => GetDataFromByteArray(array);

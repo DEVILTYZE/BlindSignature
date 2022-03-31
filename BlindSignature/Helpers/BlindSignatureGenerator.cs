@@ -6,9 +6,8 @@ namespace BlindSignature.Helpers
 {
     public static class BlindSignatureGenerator
     {
-        public static (int, IntNumberArray) SignByOpenKey(IntNumberArray number, Key openKey)
+        public static IntNumberArray SignByOpenKey(IntNumberArray number, Key openKey, int randomValue)
         {
-            var randomValue = GetRandomValue(openKey);
             var bigRandomValue = new BigInteger(randomValue);
             //var bigExponent = new BigInteger(openKey.Exponent);
             var bigModule = new BigInteger(openKey.Module);
@@ -23,7 +22,7 @@ namespace BlindSignature.Helpers
                 //number[i] = (int)(number[i] * ((long)randomValue ^ openKey.Value) % openKey.Module);
             }
 
-            return (randomValue, number);
+            return number;
         }
 
         public static IntNumberArray SignByClosedKey(IntNumberArray number, Key closedKey)
@@ -125,7 +124,7 @@ namespace BlindSignature.Helpers
             return (openKey, closedKey);
         }
 
-        private static int GetRandomValue(Key openKey)
+        public static int GetRandomValue(Key openKey)
         {
             var random = new Random();
             int randomValue;

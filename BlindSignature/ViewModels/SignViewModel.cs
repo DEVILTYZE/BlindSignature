@@ -19,8 +19,7 @@ namespace BlindSignature.ViewModels
     {
         private readonly HostViewModel _hostModel;
         private string _exceptionMessage, _message, _logs;
-        private Key _openKey;
-        private readonly Key _closedKey;
+        private Key _openKey, _closedKey;
         private int _randomValue;
         private bool _isThreadWaiting;
         private bool _isServerWorking;
@@ -83,7 +82,7 @@ namespace BlindSignature.ViewModels
         public Key ClosedKey
         {
             get => _closedKey;
-            init
+            set
             {
                 _closedKey = value;
                 OnPropertyChanged(nameof(ClosedKey));
@@ -120,11 +119,14 @@ namespace BlindSignature.ViewModels
             }
         }
         
+        public bool[] IsRandomValues { get; }
+        
         public SignViewModel()
         {
             if (NetworkInterface.GetIsNetworkAvailable())
                 HostModel = new HostViewModel();
 
+            IsRandomValues = new[] { true, true };
             IsThreadWaiting = true;
             Logs = string.Empty;
             (OpenKey, ClosedKey) = BlindSignatureGenerator.GenerateRandomKeys();
@@ -135,6 +137,7 @@ namespace BlindSignature.ViewModels
             if (string.IsNullOrEmpty(Message))
                 return false;
             
+            CheckRandomValues();
             IsThreadWaiting = false;
             
             _thread = new Thread(SendMessage);
@@ -177,7 +180,7 @@ namespace BlindSignature.ViewModels
                 var number = new IntNumberArray(message.GetByteArray());
                 var originalMessageNumber = (IntNumberArray)number.Clone();
                 Logs += "Чистое сообщение: " + number + "\r\n";
-                (RandomValue, number) = BlindSignatureGenerator.SignByOpenKey(number, OpenKey);
+                number = BlindSignatureGenerator.SignByOpenKey(number, OpenKey, RandomValue);
                 Logs += "Отправленное подписанное сообщение: " + number + "\r\n";
                 
                 // Sent signed message by us.
@@ -240,6 +243,7 @@ namespace BlindSignature.ViewModels
 
         public void WaitConnection()
         {
+            CheckRandomValues();
             IsServerWorking = true;
             IsThreadWaiting = false;
             
@@ -370,6 +374,15 @@ namespace BlindSignature.ViewModels
                 IsThreadWaiting = true;
             });
             thread.Start();
+        }
+        
+        public void CheckRandomValues()
+        {
+            if (IsRandomValues[0])
+                (OpenKey, ClosedKey) = BlindSignatureGenerator.GenerateRandomKeys();
+
+            if (IsRandomValues[1])
+                RandomValue = BlindSignatureGenerator.GetRandomValue(OpenKey);
         }
         
         public event PropertyChangedEventHandler PropertyChanged;
